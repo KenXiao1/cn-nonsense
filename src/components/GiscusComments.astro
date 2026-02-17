@@ -1,0 +1,67 @@
+---
+const repo = import.meta.env.PUBLIC_GISCUS_REPO ?? "KenXiao1/ChinasWildestStories";
+const repoId = import.meta.env.PUBLIC_GISCUS_REPO_ID ?? "";
+const category = import.meta.env.PUBLIC_GISCUS_CATEGORY ?? "General";
+const categoryId = import.meta.env.PUBLIC_GISCUS_CATEGORY_ID ?? "";
+const mapping = import.meta.env.PUBLIC_GISCUS_MAPPING ?? "pathname";
+const strict = import.meta.env.PUBLIC_GISCUS_STRICT ?? "0";
+const reactionsEnabled = import.meta.env.PUBLIC_GISCUS_REACTIONS_ENABLED ?? "1";
+const emitMetadata = import.meta.env.PUBLIC_GISCUS_EMIT_METADATA ?? "0";
+const inputPosition = import.meta.env.PUBLIC_GISCUS_INPUT_POSITION ?? "top";
+const theme = import.meta.env.PUBLIC_GISCUS_THEME ?? "preferred_color_scheme";
+const lang = import.meta.env.PUBLIC_GISCUS_LANG ?? "zh-CN";
+---
+
+<section class="frame comments">
+  <h2>章节评论</h2>
+  {
+    repoId && categoryId ? (
+      <script
+        src="https://giscus.app/client.js"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+        data-mapping={mapping}
+        data-strict={strict}
+        data-reactions-enabled={reactionsEnabled}
+        data-emit-metadata={emitMetadata}
+        data-input-position={inputPosition}
+        data-theme={theme}
+        data-lang={lang}
+        crossorigin="anonymous"
+        async
+      ></script>
+    ) : (
+      <p class="setup-tip">
+        尚未配置 giscus ID。请在环境变量中设置
+        <code>PUBLIC_GISCUS_REPO_ID</code> 和 <code>PUBLIC_GISCUS_CATEGORY_ID</code>。
+      </p>
+    )
+  }
+</section>
+
+<style>
+  .comments {
+    margin-top: 2rem;
+  }
+
+  .comments h2 {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    font-size: 1.3rem;
+  }
+
+  .setup-tip {
+    margin: 0;
+    color: #6b6255;
+    line-height: 1.8;
+  }
+
+  code {
+    font-family: "Cascadia Mono", "Consolas", monospace;
+    background: rgba(186, 27, 29, 0.08);
+    padding: 0.1rem 0.28rem;
+    border-radius: 0.25rem;
+  }
+</style>

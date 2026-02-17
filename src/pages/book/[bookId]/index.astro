@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const books = await getCollection("books");
+  return books.map((book) => ({
+    params: { bookId: book.data.book_id },
+    props: { book }
+  }));
+}
+
+const { book } = Astro.props;
+const chapters = (await getCollection("chapters", ({ data }) =>
+  data.book_id === book.data.book_id && data.status === "active"
+)).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title={`${book.data.title} · 目录`}>
+  <section class="frame">
+    <h2>{book.data.title}</h2>
+    <p class="meta">book_id: {book.data.book_id}</p>
+    <ol>
+      {chapters.map((chapter) => (
+        <li>
+          <a href={`/book/${book.data.book_id}/chapter/${chapter.data.chapter_id}`}>
+            {chapter.data.title}
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+</BaseLayout>
+
+<style>
+  h2 {
+    margin: 0;
+  }
+
+  .meta {
+    margin: 0.2rem 0 1rem;
+    color: #6a6156;
+    font-size: 0.9rem;
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 1.35rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+</style>

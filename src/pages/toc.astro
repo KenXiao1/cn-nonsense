@@ -1,0 +1,63 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const books = await getCollection("books");
+const chapters = await getCollection("chapters", ({ data }) => data.status === "active");
+const grouped = new Map();
+
+for (const chapter of chapters) {
+  const bucket = grouped.get(chapter.data.book_id) ?? [];
+  bucket.push(chapter);
+  grouped.set(chapter.data.book_id, bucket);
+}
+
+for (const [bookId, list] of grouped.entries()) {
+  list.sort((a, b) => a.data.order - b.data.order);
+  grouped.set(bookId, list);
+}
+---
+
+<BaseLayout title="全站目录">
+  <section class="frame">
+    <h2>目录总览</h2>
+    {books.length === 0 ? <p>暂无已导入图书，请先执行 ingest。</p> : null}
+    {books.map((book) => (
+      <article class="book">
+        <h3><a href={`/book/${book.data.book_id}`}>{book.data.title}</a></h3>
+        <ol>
+          {(grouped.get(book.data.book_id) ?? []).map((chapter) => (
+            <li>
+              <a href={`/book/${book.data.book_id}/chapter/${chapter.data.chapter_id}`}>
+                {chapter.data.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </article>
+    ))}
+  </section>
+</BaseLayout>
+
+<style>
+  h2 {
+    margin: 0 0 1rem;
+  }
+
+  .book + .book {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #b8a78f;
+  }
+
+  h3 {
+    margin: 0;
+  }
+
+  ol {
+    margin: 0.75rem 0 0;
+    padding-left: 1.35rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+</style>

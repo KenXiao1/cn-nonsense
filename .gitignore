@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+coverage/
+.tmp/
+.env
+.env.*
+!.env.example
+*.docx

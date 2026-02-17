@@ -1,0 +1,108 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const chapters = (await getCollection("chapters", ({ data }) => data.status === "active"))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((chapter) => ({
+    bookId: chapter.data.book_id,
+    chapterId: chapter.data.chapter_id,
+    title: chapter.data.title,
+    href: `/book/${chapter.data.book_id}/chapter/${chapter.data.chapter_id}`,
+    text: chapter.body
+  }));
+---
+
+<BaseLayout title="全文检索">
+  <section class="frame">
+    <h2>全文检索</h2>
+    <input id="query" type="search" placeholder="输入关键词，例如：战神综合征" />
+    <p class="tip">匹配标题与正文，实时显示前 30 条。</p>
+    <ul id="results"></ul>
+  </section>
+</BaseLayout>
+
+<script type="application/json" id="search-data" set:html={JSON.stringify(chapters)}></script>
+<script>
+  const input = document.querySelector("#query");
+  const resultEl = document.querySelector("#results");
+  const payloadNode = document.querySelector("#search-data");
+  const corpus = JSON.parse(payloadNode?.textContent ?? "[]");
+
+  function highlight(text, keyword) {
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const reg = new RegExp(escaped, "ig");
+    return text.replace(reg, (match) => `<mark>${match}</mark>`);
+  }
+
+  function renderResults(items, keyword) {
+    resultEl.innerHTML = "";
+    for (const item of items.slice(0, 30)) {
+      const idx = item.text.toLowerCase().indexOf(keyword.toLowerCase());
+      const snippet = idx >= 0
+        ? item.text.slice(Math.max(0, idx - 38), idx + 86).replaceAll("\n", " ")
+        : "";
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <a href="${item.href}">${highlight(item.title, keyword)}</a>
+        <p>${snippet ? `${highlight(snippet, keyword)}...` : "仅标题命中"}</p>
+      `;
+      resultEl.appendChild(li);
+    }
+  }
+
+  function onInput() {
+    const keyword = (input.value || "").trim();
+    if (!keyword) {
+      resultEl.innerHTML = "";
+      return;
+    }
+    const filtered = corpus.filter((item) =>
+      item.title.includes(keyword) || item.text.includes(keyword)
+    );
+    renderResults(filtered, keyword);
+  }
+
+  input?.addEventListener("input", onInput);
+</script>
+
+<style>
+  h2 {
+    margin: 0;
+  }
+
+  #query {
+    width: 100%;
+    margin-top: 0.8rem;
+    border: 1px solid #b9aa92;
+    border-radius: 0.35rem;
+    font-size: 1rem;
+    padding: 0.58rem 0.72rem;
+    background: #fffefb;
+  }
+
+  .tip {
+    color: #6c6256;
+    font-size: 0.9rem;
+    margin-top: 0.6rem;
+    margin-bottom: 0.2rem;
+  }
+
+  #results {
+    margin: 0.9rem 0 0;
+    padding-left: 1rem;
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  #results p {
+    margin: 0.3rem 0 0;
+    color: #5e564a;
+  }
+
+  mark {
+    background: #ffeb9f;
+    color: inherit;
+    padding: 0 0.08rem;
+  }
+</style>

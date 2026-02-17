@@ -1,0 +1,129 @@
+---
+const { title = "全中国最激烈故事", description = "在线阅读站" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Serif+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --bg-ink: #131212;
+        --paper: #fff7ec;
+        --accent: #ba1b1d;
+        --muted: #5f5648;
+        --line: #cfbfa6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--bg-ink);
+        font-family: "Noto Serif SC", serif;
+        background:
+          radial-gradient(circle at 10% 0%, #f1ddbe 0, transparent 35%),
+          radial-gradient(circle at 90% 20%, #eed8d1 0, transparent 30%),
+          linear-gradient(160deg, #f8f4ec 0%, #f0e6d9 60%, #efe2d0 100%);
+        min-height: 100vh;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+        background-size: 18px 18px;
+        opacity: 0.25;
+      }
+
+      main {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+      }
+
+      .site-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 2px solid var(--line);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.8rem;
+      }
+
+      .site-title {
+        font-family: "Bebas Neue", "Noto Serif SC", serif;
+        letter-spacing: 0.04em;
+        font-size: clamp(2rem, 5vw, 3.1rem);
+        margin: 0;
+      }
+
+      .site-title a {
+        text-decoration: none;
+        color: var(--bg-ink);
+      }
+
+      .site-tag {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .frame {
+        background: color-mix(in srgb, var(--paper) 92%, white 8%);
+        border: 1px solid var(--line);
+        box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      @media (max-width: 640px) {
+        .site-head {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+
+        main {
+          padding-top: 1.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="site-head">
+        <h1 class="site-title"><a href="/">China's Wildest Stories</a></h1>
+        <p class="site-tag">按章节阅读 · 固定 chapter_id · 可持续更新</p>
+      </header>
+      <slot />
+    </main>
+  </body>
+</html>

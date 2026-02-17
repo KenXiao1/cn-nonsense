@@ -1,0 +1,107 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import GiscusComments from "../../../../components/GiscusComments.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const chapters = await getCollection("chapters", ({ data }) => data.status === "active");
+  return chapters.map((chapter) => ({
+    params: {
+      bookId: chapter.data.book_id,
+      chapterId: chapter.data.chapter_id
+    },
+    props: {
+      chapter
+    }
+  }));
+}
+
+const { chapter } = Astro.props;
+const { Content } = await render(chapter);
+
+const siblingChapters = (await getCollection("chapters", ({ data }) =>
+  data.book_id === chapter.data.book_id && data.status === "active"
+)).sort((a, b) => a.data.order - b.data.order);
+
+const currentIndex = siblingChapters.findIndex(
+  (item) => item.data.chapter_id === chapter.data.chapter_id
+);
+const prev = currentIndex > 0 ? siblingChapters[currentIndex - 1] : null;
+const next = currentIndex >= 0 && currentIndex < siblingChapters.length - 1
+  ? siblingChapters[currentIndex + 1]
+  : null;
+---
+
+<BaseLayout title={`${chapter.data.title} · 在线阅读`}>
+  <article class="frame chapter">
+    <header>
+      <p class="badge">
+        {chapter.data.book_id} / {chapter.data.chapter_id}
+      </p>
+      <h2>{chapter.data.title}</h2>
+    </header>
+    <Content />
+  </article>
+
+  <nav class="frame pager">
+    {prev ? (
+      <a href={`/book/${chapter.data.book_id}/chapter/${prev.data.chapter_id}`}>
+        ← 上一章：{prev.data.title}
+      </a>
+    ) : <span>← 已是第一章</span>}
+    {next ? (
+      <a href={`/book/${chapter.data.book_id}/chapter/${next.data.chapter_id}`}>
+        下一章：{next.data.title} →
+      </a>
+    ) : <span>已是最后一章 →</span>}
+  </nav>
+
+  <GiscusComments />
+</BaseLayout>
+
+<style>
+  .chapter {
+    line-height: 1.95;
+    font-size: 1.02rem;
+  }
+
+  .chapter header {
+    border-bottom: 1px dashed #b8a78f;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .badge {
+    margin: 0;
+    color: #7a6f61;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+  }
+
+  h2 {
+    margin: 0.2rem 0 0;
+    font-size: clamp(1.35rem, 3.5vw, 2rem);
+  }
+
+  :global(.chapter img) {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #d8c7ab;
+    background: #fff;
+  }
+
+  .pager {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .pager a,
+  .pager span {
+    color: #5a4f43;
+    text-decoration: none;
+    font-size: 0.93rem;
+  }
+</style>
