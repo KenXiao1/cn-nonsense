@@ -16,6 +16,13 @@ const latest = chapters.at(-1);
       {latest ? <a href={`/book/${latest.data.book_id}/chapter/${latest.data.chapter_id}`}>最新章节</a> : null}
       <a href="/book/book-1">章节目录</a>
     </div>
+    <div class="download">
+      <p class="download-label">📥 下载离线版</p>
+      <div class="actions">
+        <a href="/downloads/全中国最激烈故事第一部—泰山府.pdf" download target="_blank">下载 PDF</a>
+        <a href="https://www.ilanzou.com/s/jCnnPSlv" target="_blank">蓝奏云下载</a>
+      </div>
+    </div>
   </section>
 </BaseLayout>
 
@@ -51,4 +58,14 @@ const latest = chapters.at(-1);
     border-color: var(--accent);
   }
   .actions a.primary:hover { opacity: 0.85; color: #fff; }
+  .download {
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+  }
+  .download-label {
+    margin: 0 0 0.6rem;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
 </style>
