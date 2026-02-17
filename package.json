@@ -13,7 +13,7 @@
     "ingest:full": "node scripts/ingest.mjs --mode full --book book-1",
     "ingest:chapter": "node scripts/ingest.mjs --mode chapter --book book-1",
     "check": "npm run test && npm run build",
-    "deploy:cf": "wrangler pages deploy dist --project-name chinaswildeststories",
+    "deploy:cf": "wrangler pages deploy dist --project-name cn-nonsense",
     "deploy:netlify": "netlify deploy --prod --dir=dist"
   },
   "dependencies": {
