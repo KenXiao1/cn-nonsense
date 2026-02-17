@@ -1,69 +1,137 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
-
-const chapters = (await getCollection("chapters", ({ data }) => data.status === "active"))
-  .sort((a, b) => a.data.order - b.data.order)
-  .map((chapter) => ({
-    bookId: chapter.data.book_id,
-    chapterId: chapter.data.chapter_id,
-    title: chapter.data.title,
-    href: `/book/${chapter.data.book_id}/chapter/${chapter.data.chapter_id}`,
-    text: chapter.body
-  }));
 ---
 
-<BaseLayout title="全文检索">
+<BaseLayout title="全文检索" description="全文检索《全中国最激烈故事》已发布章节。">
   <section class="frame">
     <h2>全文检索</h2>
-    <input id="query" type="search" placeholder="输入关键词，例如：战神综合征" />
-    <p class="tip">匹配标题与正文，实时显示前 30 条。</p>
-    <ul id="results"></ul>
+    <label for="query" class="search-label">搜索关键词</label>
+    <input
+      id="query"
+      type="search"
+      placeholder="输入关键词，例如：战神综合征"
+      autocomplete="off"
+      aria-label="搜索关键词"
+    />
+    <p class="tip">基于构建索引搜索标题与正文，最多显示前 30 条。</p>
+    <p id="search-status" class="status" role="status" aria-live="polite"></p>
+    <ul id="results" aria-live="polite"></ul>
   </section>
 </BaseLayout>
 
-<script type="application/json" id="search-data" set:html={JSON.stringify(chapters)}></script>
 <script>
-  const input = document.querySelector("#query");
-  const resultEl = document.querySelector("#results");
-  const payloadNode = document.querySelector("#search-data");
-  const corpus = JSON.parse(payloadNode?.textContent ?? "[]");
+  (function () {
+    const input = document.querySelector("#query");
+    const resultEl = document.querySelector("#results");
+    const statusEl = document.querySelector("#search-status");
 
-  function highlight(text, keyword) {
-    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const reg = new RegExp(escaped, "ig");
-    return text.replace(reg, (match) => `<mark>${match}</mark>`);
-  }
-
-  function renderResults(items, keyword) {
-    resultEl.innerHTML = "";
-    for (const item of items.slice(0, 30)) {
-      const idx = item.text.toLowerCase().indexOf(keyword.toLowerCase());
-      const snippet = idx >= 0
-        ? item.text.slice(Math.max(0, idx - 38), idx + 86).replaceAll("\n", " ")
-        : "";
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <a href="${item.href}">${highlight(item.title, keyword)}</a>
-        <p>${snippet ? `${highlight(snippet, keyword)}...` : "仅标题命中"}</p>
-      `;
-      resultEl.appendChild(li);
-    }
-  }
-
-  function onInput() {
-    const keyword = (input.value || "").trim();
-    if (!keyword) {
-      resultEl.innerHTML = "";
+    if (
+      !(input instanceof HTMLInputElement) ||
+      !(resultEl instanceof HTMLUListElement) ||
+      !(statusEl instanceof HTMLParagraphElement)
+    ) {
       return;
     }
-    const filtered = corpus.filter((item) =>
-      item.title.includes(keyword) || item.text.includes(keyword)
-    );
-    renderResults(filtered, keyword);
-  }
 
-  input?.addEventListener("input", onInput);
+    let pagefind = null;
+    let timer = null;
+    let activeSearchToken = 0;
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    function clearResults() {
+      resultEl.textContent = "";
+    }
+
+    function stripTags(text) {
+      return text.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    }
+
+    function appendResult(item) {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      const desc = document.createElement("p");
+
+      link.href = item.url;
+      link.textContent = item.title;
+      desc.textContent = item.excerpt || "仅标题命中";
+
+      li.appendChild(link);
+      li.appendChild(desc);
+      resultEl.appendChild(li);
+    }
+
+    async function ensurePagefind() {
+      if (pagefind) {
+        return pagefind;
+      }
+
+      try {
+        const modulePath = "/pagefind/pagefind.js";
+        pagefind = await import(/* @vite-ignore */ modulePath);
+        return pagefind;
+      } catch (_) {
+        setStatus("搜索索引尚未就绪。请先执行 npm run build，再访问搜索页。");
+        return null;
+      }
+    }
+
+    async function runSearch(keyword, token) {
+      const mod = await ensurePagefind();
+      if (!mod) {
+        clearResults();
+        return;
+      }
+
+      if (!keyword) {
+        clearResults();
+        setStatus("");
+        return;
+      }
+
+      setStatus("正在搜索...");
+      try {
+        const response = await mod.search(keyword);
+        const topResults = response.results.slice(0, 30);
+
+        clearResults();
+        for (const hit of topResults) {
+          if (token !== activeSearchToken) {
+            return;
+          }
+          const data = await hit.data();
+          appendResult({
+            url: data.url,
+            title: data.meta.title,
+            excerpt: stripTags(data.excerpt || "")
+          });
+        }
+
+        if (topResults.length === 0) {
+          setStatus(`没有找到“${keyword}”相关结果。`);
+        } else {
+          setStatus(`找到 ${topResults.length} 条结果。`);
+        }
+      } catch (_) {
+        clearResults();
+        setStatus("搜索暂时不可用，请稍后刷新重试。");
+      }
+    }
+
+    input.addEventListener("input", () => {
+      const keyword = input.value.trim();
+      activeSearchToken += 1;
+      const currentToken = activeSearchToken;
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        void runSearch(keyword, currentToken);
+      }, 120);
+    });
+  })();
 </script>
 
 <style is:global>
@@ -71,9 +139,16 @@ const chapters = (await getCollection("chapters", ({ data }) => data.status === 
     margin: 0;
   }
 
+  .search-label {
+    display: inline-block;
+    margin-top: 0.8rem;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
   #query {
     width: 100%;
-    margin-top: 0.8rem;
+    margin-top: 0.45rem;
     border: 1px solid var(--line);
     border-radius: 0.35rem;
     font-size: 1rem;
@@ -81,46 +156,57 @@ const chapters = (await getCollection("chapters", ({ data }) => data.status === 
     background: var(--paper);
     color: var(--bg-ink);
   }
+
   .tip {
     color: var(--muted);
     font-size: 0.9rem;
     margin-top: 0.6rem;
     margin-bottom: 0.2rem;
   }
+
+  .status {
+    margin: 0.4rem 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    min-height: 1.3rem;
+  }
+
   #results {
-    margin: 0.9rem 0 0;
+    margin: 0.2rem 0 0;
     padding: 0;
     list-style: none;
     display: grid;
     gap: 1px;
   }
+
   #results li {
     border-radius: 0.35rem;
     border: 1px solid transparent;
-    transition: background .15s, border-color .15s;
+    transition: background 0.15s, border-color 0.15s;
   }
+
   #results li:hover {
     background: var(--bg);
     border-color: var(--line);
   }
+
   #results a {
     display: block;
     padding: 0.55rem 0.75rem 0;
     text-decoration: none;
     color: var(--bg-ink);
     font-weight: 600;
-    transition: color .15s;
+    transition: color 0.15s;
   }
-  #results li:hover a { color: var(--accent); }
+
+  #results li:hover a {
+    color: var(--accent);
+  }
+
   #results p {
     margin: 0.25rem 0 0;
     padding: 0 0.75rem 0.55rem;
     color: var(--muted);
     font-size: 0.9rem;
-  }
-  mark {
-    background: #ffeb9f;
-    color: inherit;
-    padding: 0 0.08rem;
   }
 </style>

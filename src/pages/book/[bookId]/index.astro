@@ -16,7 +16,10 @@ const chapters = (await getCollection("chapters", ({ data }) =>
 )).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title={`${book.data.title} · 目录`}>
+<BaseLayout
+  title={`${book.data.title} · 目录`}
+  description={`${book.data.title}章节目录与在线阅读入口。`}
+>
   <section class="frame">
     <h2>{book.data.title}</h2>
     <ol>
@@ -34,7 +37,14 @@ const chapters = (await getCollection("chapters", ({ data }) =>
 
   <script is:inline>
     (function(){
-      var hist = JSON.parse(localStorage.getItem('readHistory')||'[]');
+      var hist = [];
+      try {
+        var raw = localStorage.getItem('readHistory');
+        var parsed = JSON.parse(raw || '[]');
+        hist = Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        hist = [];
+      }
       var read = {};
       hist.forEach(function(h){ read[h.id] = true; });
       document.querySelectorAll('ol li a').forEach(function(a){

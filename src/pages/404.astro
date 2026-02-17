@@ -1,0 +1,63 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="页面不存在 · 全中国最激烈故事"
+  description="你访问的页面不存在，请返回首页或章节目录继续阅读。"
+>
+  <section class="frame not-found">
+    <p class="code">404</p>
+    <h2>页面不存在</h2>
+    <p>你访问的链接可能已失效，或者输入地址有误。</p>
+    <div class="actions">
+      <a href="/">返回首页</a>
+      <a href="/toc">查看全站目录</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    text-align: center;
+    padding: 2rem 1.25rem;
+  }
+
+  .code {
+    margin: 0;
+    font-size: clamp(2.4rem, 8vw, 4rem);
+    color: var(--accent);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  h2 {
+    margin: 0.8rem 0 0.45rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .actions {
+    margin-top: 1.1rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .actions a {
+    text-decoration: none;
+    border: 1px solid var(--line);
+    color: var(--bg-ink);
+    padding: 0.45rem 0.8rem;
+    border-radius: 0.32rem;
+  }
+
+  .actions a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>

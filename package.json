@@ -6,21 +6,28 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "pagefind --site dist",
+    "build:release": "npm run optimize:images && npm run build",
     "preview": "astro preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "ingest": "node scripts/ingest.mjs",
     "ingest:full": "node scripts/ingest.mjs --mode full --book book-1",
     "ingest:chapter": "node scripts/ingest.mjs --mode chapter --book book-1",
+    "optimize:images": "node scripts/optimize-images.mjs",
     "check": "npm run test && npm run build",
     "deploy:cf": "wrangler pages deploy dist --project-name cn-nonsense",
     "deploy:netlify": "netlify deploy --prod --dir=dist"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.15",
+    "@astrojs/sitemap": "^3.7.0",
     "astro": "^5.12.8",
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "pagefind": "^1.4.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

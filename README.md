@@ -5,6 +5,48 @@
 - Netlify: https://cn-nonsense.netlify.app/
 - Cloudflare Pages: https://cn-nonsense.pages.dev/
 
+## 域名与索引策略
+
+- Canonical 主域名：`https://cn-nonsense.netlify.app`
+- Cloudflare Pages：镜像域（不作为 canonical）
+- `robots.txt`：`public/robots.txt`
+- `site` 配置：`astro.config.mjs`
+
+## 构建与验证（含 sitemap / RSS / Pagefind）
+
+```bash
+npm install
+npm run test
+npm run build
+```
+
+说明：
+- `npm run build` 会先执行 `astro build`，随后自动执行 `pagefind --site dist`（`postbuild`）。
+- `npm run build:release` 会先压缩章节图片，再执行完整构建与 Pagefind 索引。
+- 构建完成后应看到：
+  - `dist/sitemap-index.xml`
+  - `dist/robots.txt`
+  - `dist/rss.xml`
+  - `dist/pagefind/`
+
+## 发布前图片压缩（可选）
+
+默认压缩目录：`public/images/book-1`
+
+```bash
+npm run optimize:images
+```
+
+只看压缩收益不写回文件：
+
+```bash
+node scripts/optimize-images.mjs --dry-run
+```
+
+## Cloudflare Web Analytics（镜像站可选）
+
+当前主域名在 Netlify。若需查看 Cloudflare 镜像站访问数据，可在 Cloudflare Pages 控制台开启 Web Analytics，无需改代码。
+
 ## GitHub 章节目录（Markdown）
 
 总目录：<https://github.com/KenXiao1/cn-nonsense/tree/main/src/content/chapters/book-1>
@@ -25,6 +67,19 @@
 | `b1-c012` | 第十二幕：天注定           | [查看](https://github.com/KenXiao1/cn-nonsense/blob/main/src/content/chapters/book-1/b1-c012.md) |
 | `b1-c013` | 第十三幕：史上最大规模冲突 | [查看](https://github.com/KenXiao1/cn-nonsense/blob/main/src/content/chapters/book-1/b1-c013.md) |
 | `b1-c014` | 第十四幕：史前史           | [查看](https://github.com/KenXiao1/cn-nonsense/blob/main/src/content/chapters/book-1/b1-c014.md) |
+
+## 关于
+
+前《无标题艺术》
+
+知乎专栏：[全中国最激烈故事](https://www.zhihu.com/column/c_1838755902276120576)
+by [泰山府在此](https://www.zhihu.com/people/ru-quan-cun-kang-ba-zi-86)
+
+## 友情链接
+
+- [《垃圾桶选集》](https://ljt-official.github.io/ljt/)
+
+---
 
 简介：《全中国最激烈故事》，本书内容就如书名所言，它是关于当代中国的活生生的故事，罕见的真正的现实主义文学，不是什么流水线网文。内容够劲、够荒诞而且够爆笑，老少咸宜，一下就让人读进去，可以说是真正关涉到我们这一代人的文学，描写一群失败失意的当代年轻人荒诞、张狂、彷徨、冲创的生活，文笔通俗而又不失深意，实在是适合茶余饭后打开猛看。毕竟大家都知道，在当代，真正关于这个时代的故事还是太少了，更何况是如此激烈、如此挣扎着要表述时代精神的故事？
 

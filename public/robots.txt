@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cn-nonsense.netlify.app/sitemap-index.xml

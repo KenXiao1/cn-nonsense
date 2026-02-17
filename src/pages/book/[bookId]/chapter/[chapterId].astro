@@ -2,6 +2,7 @@
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import GiscusComments from "../../../../components/GiscusComments.astro";
 import { getCollection, render } from "astro:content";
+import { createExcerpt } from "../../../../utils/content-meta";
 
 export async function getStaticPaths() {
   const chapters = await getCollection("chapters", ({ data }) => data.status === "active");
@@ -18,6 +19,27 @@ export async function getStaticPaths() {
 
 const { chapter } = Astro.props;
 const { Content } = await render(chapter);
+const book = (await getCollection("books", ({ data }) => data.book_id === chapter.data.book_id))[0];
+const chapterDescription = createExcerpt(chapter.body);
+const siteUrl = Astro.site ?? new URL("https://cn-nonsense.netlify.app");
+const chapterPath = `/book/${chapter.data.book_id}/chapter/${chapter.data.chapter_id}`;
+const chapterUrl = new URL(chapterPath, siteUrl).toString();
+const bookUrl = new URL(`/book/${chapter.data.book_id}`, siteUrl).toString();
+const chapterStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "Chapter",
+  headline: chapter.data.title,
+  name: chapter.data.title,
+  description: chapterDescription,
+  inLanguage: "zh-CN",
+  dateModified: chapter.data.updated_at,
+  url: chapterUrl,
+  isPartOf: {
+    "@type": "Book",
+    name: book?.data.title ?? chapter.data.book_id,
+    url: bookUrl
+  }
+};
 
 const siblingChapters = (await getCollection("chapters", ({ data }) =>
   data.book_id === chapter.data.book_id && data.status === "active"
@@ -32,7 +54,14 @@ const next = currentIndex >= 0 && currentIndex < siblingChapters.length - 1
   : null;
 ---
 
-<BaseLayout title={`${chapter.data.title} · 在线阅读`}>
+<BaseLayout
+  title={`${chapter.data.title} · 在线阅读`}
+  description={chapterDescription}
+  ogType="article"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(chapterStructuredData)}></script>
+  </Fragment>
   <div class="reader-toolbar">
     <button id="font-dec" aria-label="缩小字体">A-</button>
     <span id="font-label">中</span>
@@ -64,23 +93,59 @@ const next = currentIndex >= 0 && currentIndex < siblingChapters.length - 1
 
   <script is:inline define:vars={{ bookId: chapter.data.book_id, chapterId: chapter.data.chapter_id, chapterTitle: chapter.data.title }}>
     (function(){
+      function safeGet(key, fallbackValue) {
+        try {
+          var value = localStorage.getItem(key);
+          return value === null ? fallbackValue : value;
+        } catch (_) {
+          return fallbackValue;
+        }
+      }
+
+      function safeSet(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (_) {
+          // Ignore storage failures (private mode / quota / disabled storage)
+        }
+      }
+
+      function readHistory() {
+        try {
+          var parsed = JSON.parse(safeGet('readHistory', '[]'));
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
       // — 字体大小 —
       var sizes = [0.9, 0.96, 1.02, 1.1, 1.2, 1.35];
       var labels = ['小','较小','中','较大','大','巨大'];
-      var idx = +(localStorage.getItem('readerFontIdx') || 2);
+      var idx = Number.parseInt(safeGet('readerFontIdx', '2'), 10);
+      if (!Number.isFinite(idx)) idx = 2;
+      if (idx < 0) idx = 0;
+      if (idx > sizes.length - 1) idx = sizes.length - 1;
       var body = document.getElementById('chapter-body');
       var label = document.getElementById('font-label');
+      var dec = document.getElementById('font-dec');
+      var inc = document.getElementById('font-inc');
+      if (!(body instanceof HTMLElement) || !(label instanceof HTMLElement)) return;
       function apply(){ body.style.fontSize = sizes[idx]+'rem'; label.textContent = labels[idx]; }
       apply();
-      document.getElementById('font-dec').onclick = function(){ if(idx>0){idx--;localStorage.setItem('readerFontIdx',idx);apply();} };
-      document.getElementById('font-inc').onclick = function(){ if(idx<sizes.length-1){idx++;localStorage.setItem('readerFontIdx',idx);apply();} };
+      if (dec instanceof HTMLElement) {
+        dec.onclick = function(){ if(idx>0){idx--;safeSet('readerFontIdx', String(idx));apply();} };
+      }
+      if (inc instanceof HTMLElement) {
+        inc.onclick = function(){ if(idx<sizes.length-1){idx++;safeSet('readerFontIdx', String(idx));apply();} };
+      }
 
       // — 阅读历史 —
-      var hist = JSON.parse(localStorage.getItem('readHistory')||'[]');
+      var hist = readHistory();
       hist = hist.filter(function(h){ return h.id !== chapterId; });
       hist.unshift({ book: bookId, id: chapterId, title: chapterTitle, ts: Date.now() });
       if(hist.length > 50) hist = hist.slice(0, 50);
-      localStorage.setItem('readHistory', JSON.stringify(hist));
+      safeSet('readHistory', JSON.stringify(hist));
 
       // — 键盘左右切换章节 —
       var links = document.querySelectorAll('.pager a');
@@ -94,6 +159,7 @@ const next = currentIndex >= 0 && currentIndex < siblingChapters.length - 1
 
       // — 返回顶部 —
       var btn = document.getElementById('back-top');
+      if (!(btn instanceof HTMLElement)) return;
       window.addEventListener('scroll', function(){ btn.style.display = window.scrollY > 400 ? '' : 'none'; });
       btn.style.display = 'none';
       btn.onclick = function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); };
