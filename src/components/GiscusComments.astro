@@ -12,26 +12,72 @@ const theme = import.meta.env.PUBLIC_GISCUS_THEME ?? "preferred_color_scheme";
 const lang = import.meta.env.PUBLIC_GISCUS_LANG ?? "zh-CN";
 ---
 
-<section class="frame comments">
+<section class="frame comments" id="giscus-comments" data-giscus-theme={theme}>
   <h2>章节评论</h2>
   {
     repoId && categoryId ? (
-      <script
-        src="https://giscus.app/client.js"
-        data-repo={repo}
-        data-repo-id={repoId}
-        data-category={category}
-        data-category-id={categoryId}
-        data-mapping={mapping}
-        data-strict={strict}
-        data-reactions-enabled={reactionsEnabled}
-        data-emit-metadata={emitMetadata}
-        data-input-position={inputPosition}
-        data-theme={theme}
-        data-lang={lang}
-        crossorigin="anonymous"
-        async
-      ></script>
+      <>
+        <script
+          src="https://giscus.app/client.js"
+          data-repo={repo}
+          data-repo-id={repoId}
+          data-category={category}
+          data-category-id={categoryId}
+          data-mapping={mapping}
+          data-strict={strict}
+          data-reactions-enabled={reactionsEnabled}
+          data-emit-metadata={emitMetadata}
+          data-input-position={inputPosition}
+          data-theme={theme}
+          data-lang={lang}
+          crossorigin="anonymous"
+          async
+        ></script>
+        <script>
+          import { createGiscusThemeMessage, resolveGiscusTheme } from "../utils/giscus-theme.ts";
+
+          (() => {
+            const section = document.getElementById("giscus-comments");
+            if (!(section instanceof HTMLElement)) {
+              return;
+            }
+
+            const configuredTheme = section.dataset.giscusTheme ?? "preferred_color_scheme";
+
+            const syncGiscusTheme = () => {
+              const frame = section.querySelector("iframe.giscus-frame");
+              if (!(frame instanceof HTMLIFrameElement) || !frame.contentWindow) {
+                return;
+              }
+
+              const isDark = document.documentElement.classList.contains("dark");
+              const nextTheme = resolveGiscusTheme(configuredTheme, isDark);
+              frame.contentWindow.postMessage(
+                createGiscusThemeMessage(nextTheme),
+                "https://giscus.app"
+              );
+            };
+
+            const htmlObserver = new MutationObserver((mutations) => {
+              for (const mutation of mutations) {
+                if (mutation.type === "attributes" && mutation.attributeName === "class") {
+                  syncGiscusTheme();
+                  break;
+                }
+              }
+            });
+            htmlObserver.observe(document.documentElement, {
+              attributes: true,
+              attributeFilter: ["class"]
+            });
+
+            const frameObserver = new MutationObserver(syncGiscusTheme);
+            frameObserver.observe(section, { childList: true, subtree: true });
+
+            syncGiscusTheme();
+          })();
+        </script>
+      </>
     ) : (
       <p class="setup-tip">
         尚未配置 giscus ID。请在环境变量中设置
