@@ -22,6 +22,7 @@ const latest = chapters.at(-1);
   <section class="entry">
     <div class="actions">
       <a class="primary" href="/book/book-1/chapter/b1-c001">开始阅读</a>
+      <a id="continue-reading" href="#" style="display:none">继续阅读</a>
       {latest ? <a href={`/book/${latest.data.book_id}/chapter/${latest.data.chapter_id}`}>最新章节</a> : null}
       <a href="/book/book-1">章节目录</a>
     </div>
@@ -33,6 +34,18 @@ const latest = chapters.at(-1);
       </div>
     </div>
   </section>
+
+  <script is:inline>
+    (function(){
+      var hist = JSON.parse(localStorage.getItem('readHistory')||'[]');
+      if(!hist.length) return;
+      var last = hist[0];
+      var el = document.getElementById('continue-reading');
+      el.href = '/book/'+last.book+'/chapter/'+last.id;
+      el.textContent = '继续阅读：'+last.title;
+      el.style.display = '';
+    })();
+  </script>
 </BaseLayout>
 
 <style>

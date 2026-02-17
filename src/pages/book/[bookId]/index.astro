@@ -31,6 +31,18 @@ const chapters = (await getCollection("chapters", ({ data }) =>
       ))}
     </ol>
   </section>
+
+  <script is:inline>
+    (function(){
+      var hist = JSON.parse(localStorage.getItem('readHistory')||'[]');
+      var read = {};
+      hist.forEach(function(h){ read[h.id] = true; });
+      document.querySelectorAll('ol li a').forEach(function(a){
+        var m = a.getAttribute('href').match(/chapter\/([^/]+)$/);
+        if(m && read[m[1]]) a.classList.add('read');
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
@@ -73,4 +85,10 @@ const chapters = (await getCollection("chapters", ({ data }) =>
     font-size: 0.85rem;
     transition: opacity .15s, color .15s;
   }
+  :global(li a.read) .num::before {
+    content: "✓ ";
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+  :global(li a.read) .title { color: var(--muted); }
 </style>

@@ -33,7 +33,12 @@ const next = currentIndex >= 0 && currentIndex < siblingChapters.length - 1
 ---
 
 <BaseLayout title={`${chapter.data.title} · 在线阅读`}>
-  <article class="frame chapter">
+  <div class="reader-toolbar">
+    <button id="font-dec" aria-label="缩小字体">A-</button>
+    <span id="font-label">中</span>
+    <button id="font-inc" aria-label="放大字体">A+</button>
+  </div>
+  <article class="frame chapter" id="chapter-body">
     <header>
       <h2>{chapter.data.title}</h2>
     </header>
@@ -54,9 +59,51 @@ const next = currentIndex >= 0 && currentIndex < siblingChapters.length - 1
   </nav>
 
   <GiscusComments />
+
+  <script is:inline define:vars={{ bookId: chapter.data.book_id, chapterId: chapter.data.chapter_id, chapterTitle: chapter.data.title }}>
+    (function(){
+      // — 字体大小 —
+      var sizes = [0.9, 0.96, 1.02, 1.1, 1.2, 1.35];
+      var labels = ['小','较小','中','较大','大','巨大'];
+      var idx = +(localStorage.getItem('readerFontIdx') || 2);
+      var body = document.getElementById('chapter-body');
+      var label = document.getElementById('font-label');
+      function apply(){ body.style.fontSize = sizes[idx]+'rem'; label.textContent = labels[idx]; }
+      apply();
+      document.getElementById('font-dec').onclick = function(){ if(idx>0){idx--;localStorage.setItem('readerFontIdx',idx);apply();} };
+      document.getElementById('font-inc').onclick = function(){ if(idx<sizes.length-1){idx++;localStorage.setItem('readerFontIdx',idx);apply();} };
+
+      // — 阅读历史 —
+      var hist = JSON.parse(localStorage.getItem('readHistory')||'[]');
+      hist = hist.filter(function(h){ return h.id !== chapterId; });
+      hist.unshift({ book: bookId, id: chapterId, title: chapterTitle, ts: Date.now() });
+      if(hist.length > 50) hist = hist.slice(0, 50);
+      localStorage.setItem('readHistory', JSON.stringify(hist));
+    })();
+  </script>
 </BaseLayout>
 
 <style>
+  .reader-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.85rem;
+  }
+  .reader-toolbar button {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.82rem;
+    transition: border-color .2s;
+  }
+  .reader-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+  #font-label { color: var(--muted); min-width: 1.5em; text-align: center; }
   .chapter {
     line-height: 1.95;
     font-size: 1.02rem;
