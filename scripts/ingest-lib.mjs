@@ -107,6 +107,7 @@ export function nextChapterId(bookId, existingIds) {
 export function splitFullMarkdownIntoChapters(markdown) {
   const lines = String(markdown ?? "").split(/\r?\n/);
   const chapters = [];
+  const leadingLines = [];
   let current = null;
 
   for (const line of lines) {
@@ -125,6 +126,8 @@ export function splitFullMarkdownIntoChapters(markdown) {
 
     if (current) {
       current.contentLines.push(line);
+    } else {
+      leadingLines.push(line);
     }
   }
 
@@ -152,17 +155,46 @@ export function splitFullMarkdownIntoChapters(markdown) {
     content: chapter.contentLines.join("\n").trim()
   }));
 
+  const leadingContent = leadingLines.join("\n").trim();
+
   // The source DOCX includes a table-of-contents block where each line looks like a chapter title.
   // Those entries are short and should not become real chapter pages.
   const firstSubstantialIndex = normalized.findIndex((chapter) => chapter.content.length >= 500);
-  if (firstSubstantialIndex > 0) {
-    return normalized.slice(firstSubstantialIndex).map((chapter, index) => ({
+  const droppedBodies = firstSubstantialIndex > 0
+    ? normalized
+      .slice(0, firstSubstantialIndex)
+      .map((chapter) => {
+        const [, ...bodyLines] = String(chapter.content ?? "").split(/\r?\n/);
+        return bodyLines.join("\n").trim();
+      })
+      .filter((value) => value.length > 0)
+    : [];
+  const filtered = firstSubstantialIndex > 0
+    ? normalized.slice(firstSubstantialIndex).map((chapter, index) => ({
       ...chapter,
       order: index + 1
-    }));
+    }))
+    : normalized;
+
+  if (filtered.length === 0) {
+    return filtered;
   }
 
-  return normalized;
+  const prefixContent = [leadingContent, ...droppedBodies].filter((value) => value.length > 0).join("\n\n");
+  if (!prefixContent) {
+    return filtered;
+  }
+
+  const [first, ...rest] = filtered;
+  const [headingLine, ...bodyLines] = String(first.content ?? "").split(/\r?\n/);
+  const body = bodyLines.join("\n").trim();
+  return [
+    {
+      ...first,
+      content: `${headingLine}\n\n${prefixContent}${body ? `\n\n${body}` : ""}`
+    },
+    ...rest
+  ];
 }
 
 export function mergeFullUpdateManifest({

@@ -47,6 +47,8 @@ describe("splitFullMarkdownIntoChapters", () => {
     expect(chapters[0].title).toBe("开幕：21世纪大审判");
     expect(chapters[0].order).toBe(1);
     expect(chapters[0].content).toMatch(/^# 开幕：21世纪大审判/m);
+    expect(chapters[0].content).toContain("# 卷首语");
+    expect(chapters[0].content).toContain("前言内容");
     expect(chapters[1].title).toBe("第二幕：张家庄的故事");
     expect(chapters[1].order).toBe(2);
   });
@@ -56,6 +58,10 @@ describe("splitFullMarkdownIntoChapters", () => {
 ## 目录
 开幕：21世纪大审判 1
 第二幕：张家庄的故事 29
+
+<img src="media/image4.png" />
+*序言*
+序言内容
 
 开幕：21世纪大审判
 ${"正文".repeat(400)}
@@ -67,6 +73,9 @@ ${"正文".repeat(350)}
     expect(chapters).toHaveLength(2);
     expect(chapters[0].title).toBe("开幕：21世纪大审判");
     expect(chapters[0].order).toBe(1);
+    expect(chapters[0].content).toContain("*序言*");
+    expect(chapters[0].content).toContain("序言内容");
+    expect(chapters[0].content).toContain("media/image4.png");
     expect(chapters[1].order).toBe(2);
   });
 });
