@@ -5,48 +5,6 @@
 - Netlify: https://cn-nonsense.netlify.app/
 - Cloudflare Pages: https://cn-nonsense.pages.dev/
 
-## 域名与索引策略
-
-- Canonical 主域名：`https://cn-nonsense.netlify.app`
-- Cloudflare Pages：镜像域（不作为 canonical）
-- `robots.txt`：`public/robots.txt`
-- `site` 配置：`astro.config.mjs`
-
-## 构建与验证（含 sitemap / RSS / Pagefind）
-
-```bash
-npm install
-npm run test
-npm run build
-```
-
-说明：
-- `npm run build` 会先执行 `astro build`，随后自动执行 `pagefind --site dist`（`postbuild`）。
-- `npm run build:release` 会先压缩章节图片，再执行完整构建与 Pagefind 索引。
-- 构建完成后应看到：
-  - `dist/sitemap-index.xml`
-  - `dist/robots.txt`
-  - `dist/rss.xml`
-  - `dist/pagefind/`
-
-## 发布前图片压缩（可选）
-
-默认压缩目录：`public/images/book-1`
-
-```bash
-npm run optimize:images
-```
-
-只看压缩收益不写回文件：
-
-```bash
-node scripts/optimize-images.mjs --dry-run
-```
-
-## Cloudflare Web Analytics（镜像站可选）
-
-当前主域名在 Netlify。若需查看 Cloudflare 镜像站访问数据，可在 Cloudflare Pages 控制台开启 Web Analytics，无需改代码。
-
 ## GitHub 章节目录（Markdown）
 
 总目录：<https://github.com/KenXiao1/cn-nonsense/tree/main/src/content/chapters/book-1>

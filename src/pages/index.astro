@@ -9,8 +9,21 @@ const latest = chapters.at(-1);
 
 <BaseLayout
   title="全中国最激烈故事 · 在线阅读"
-  description="《全中国最激烈故事》在线阅读站，提供章节阅读、目录浏览与离线下载。"
+  description="《全中国最激烈故事》在线阅读——泰山府在此（拉导）著，前《无标题艺术》作者。提供章节阅读、目录浏览与离线下载。"
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "全中国最激烈故事",
+      "url": "https://cn-nonsense.netlify.app",
+      "author": {
+        "@type": "Person",
+        "name": "泰山府在此",
+        "alternateName": "拉导"
+      }
+    })} />
+  </Fragment>
   <section class="manifesto">
     <h2 class="title-main">全中国最<br/>激烈故事</h2>
     <blockquote class="quote">
@@ -46,7 +59,7 @@ const latest = chapters.at(-1);
     <div class="meta-info">
       <p>前《无标题艺术》</p>
       <p>知乎专栏：<a href="https://www.zhihu.com/column/c_1838755902276120576" target="_blank">全中国最激烈故事</a></p>
-      <p>by <a href="https://www.zhihu.com/people/ru-quan-cun-kang-ba-zi-86" target="_blank">泰山府在此</a></p>
+      <p>by <a href="https://www.zhihu.com/people/ru-quan-cun-kang-ba-zi-86" target="_blank">泰山府在此</a>（拉导）</p>
     </div>
     <div class="meta-info">
       <p class="meta-title">友情链接</p>

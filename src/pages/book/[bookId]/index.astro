@@ -18,8 +18,20 @@ const chapters = (await getCollection("chapters", ({ data }) =>
 
 <BaseLayout
   title={`${book.data.title} · 目录`}
-  description={`${book.data.title}章节目录与在线阅读入口。`}
+  description={book.data.description ?? `${book.data.title}章节目录与在线阅读入口。`}
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Book",
+      "name": book.data.title,
+      "author": {
+        "@type": "Person",
+        "name": "泰山府在此",
+        "alternateName": "拉导"
+      }
+    })} />
+  </Fragment>
   <section class="frame">
     <h2>{book.data.title}</h2>
     <ol>

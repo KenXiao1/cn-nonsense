@@ -4,6 +4,7 @@ const books = defineCollection({
   schema: z.object({
     book_id: z.string(),
     title: z.string(),
+    description: z.string().optional(),
     updated_at: z.string().optional()
   })
 });
